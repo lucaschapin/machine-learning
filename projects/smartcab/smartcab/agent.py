@@ -8,7 +8,7 @@ class LearningAgent(Agent):
     """ An agent that learns to drive in the Smartcab world.
         This is the object you will be modifying. """ 
 
-    def __init__(self, env, learning=True, epsilon=1.0, alpha=0.5):
+    def __init__(self, env, learning=True, epsilon=1.0, alpha=0.5, trial=1):
         super(LearningAgent, self).__init__(env)     # Set the agent in the evironment 
         self.planner = RoutePlanner(self.env, self)  # Create a route planner
         self.valid_actions = self.env.valid_actions  # The set of valid actions
@@ -23,6 +23,7 @@ class LearningAgent(Agent):
         ## TO DO ##
         ###########
         # Set any additional class parameters as needed
+        self.trial = trial # keep track of which trial number we're on
 
 
     def reset(self, destination=None, testing=False):
@@ -44,7 +45,8 @@ class LearningAgent(Agent):
         # self.epsilon -= .05
 
         # decay function for optimized Q-learning agent
-        self.epsilon *= math.exp(-.01)
+        self.trial += 1
+        self.epsilon = 1 - (.002 * self.trial)**2
 
         if testing:
             self.epsilon = 0
@@ -72,7 +74,7 @@ class LearningAgent(Agent):
         # With the hand-engineered features, this learning process gets entirely negated.
         
         # Set 'state' as a tuple of relevant data for the agent        
-        state = (waypoint, inputs['light'], inputs['oncoming'])
+        state = (waypoint, inputs['light'], inputs['oncoming'], inputs['left'])
         
         return state
 
@@ -149,7 +151,7 @@ class LearningAgent(Agent):
         #   Use only the learning rate 'alpha' (do not use the discount factor 'gamma')
 
         if self.learning:
-            self.Q[state][action] += self.alpha*reward   
+            self.Q[state][action] = (1.0 - self.alpha) * self.Q[state][action] + self.alpha * reward
         return
 
     def update(self):
